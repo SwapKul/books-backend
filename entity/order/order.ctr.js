@@ -1,4 +1,5 @@
 import Cart from "../cart/cart.mod.js";
+import Customer from "../customers/customer.mod.js";
 import Order from "./order.mod.js";
 
 export const getOrders = async (req, res) => {
@@ -26,6 +27,12 @@ export const createOrder = async (req, res) => {
             }
         });
 
+        const custInfo = await Customer.findOne({
+            where: {
+                customer_id
+            }
+        })
+
         const newOrder = Order.build({
             order_id: `order-${v4()}`,
             order_subtotal: exist.cart_subtotal,
@@ -33,8 +40,17 @@ export const createOrder = async (req, res) => {
             is_active: 1,
             created_by: customer_id
         });
+        
 
         await newOrder.save();
+
+        if (newOrder) {
+            await Customer.update({ points: custInfo.points - exist.cart_subtotal},{
+                where: {
+                    customer_id
+                }
+            })
+        }
         return res.status(200).json({ status: "success", msg: "Order successfully created", data: newOrder});
 
     } catch (err) {
@@ -52,13 +68,20 @@ export const cancelOrder = async (req, res) => {
             }
         });
 
-        const cancelOrder = Order.update({
+        const cancelOrder = await Order.update({
             is_active: 0,
         },{
         where :{
             order_id
         }});
 
+        if (cancelOrder) {
+            await Customer.update({ points: custInfo.points + exist.order_subtotal},{
+                where: {
+                    customer_id
+                }
+            })
+        }
         return res.status(200).json({ status: "success", msg: "Order successfully cancelled", data: cancelOrder});
 
     } catch (err) {

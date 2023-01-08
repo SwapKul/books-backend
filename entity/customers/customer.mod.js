@@ -19,6 +19,8 @@ const Customer = sequelize.define("customers", {
 
   mobile_no: { type: BIGINT, allowNull: false },
 
+  points: { type: INTEGER, defaultValue: 100},
+
   password: {type: STRING, allowNull: false},
 
   customer_image: { type: BLOB("long"), allowNull: true },
